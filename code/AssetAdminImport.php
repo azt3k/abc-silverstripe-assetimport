@@ -2,42 +2,23 @@
 
 class AssetAdminImport extends LeftAndMainExtension {
 
-    private static $allowed_actions = array(
-        'import'
-    );
-
     /**
      * @param Form $form
      * @return Form $form
      */
     public function updateEditForm(Form $form) {
 
-        $script = <<<SCRIPT
-            <script>
-                $('#import-assests-input').on('change', function() {
-
-                    var $this = $(this),
-                        $form = $this.closest('form');
-
-                    $form.attr('action', $this->owner->Link('import'));
-                         .trigger('submit');
-
-                });
-				$('#import-assests-btn').on('click', function(e) {
-					e.preventDefault();
-					$('#import-assests-input').trigger('click');
-				});
-            </script>
-        SCRIPT;
-
-        $html = <<<HTML
-            <input style="display: none" type="file" id="import-assests-file" name="import-assests-file" onChange={this.handlePhotoFromFs} />
-            <a id="import-assests-btn" class="ss-ui-button ss-ui-action ui-button-text-icon-primary" data-icon="arrow-circle-135-left" title="%s" href="%s">%s</a>
-        HTML;
+        $html = '
+            <a id="import-assets-btn"
+               class="ss-ui-button ss-ui-action ui-button-text-icon-primary"
+               data-icon="arrow-circle-135-left"
+               title="Import Files"
+               href="' . $this->owner->Link('import') . '">Import backup</a>
+        ';
 
         $importButton = new LiteralField(
             'ImportButton',
-            $script . $html;
+            $html
         );
 
         if($field = $this->fieldByExtraClass($form->Fields(), 'cms-actions-row')) {
@@ -66,20 +47,4 @@ class AssetAdminImport extends LeftAndMainExtension {
             }
         }
     }
-
-    /**
-     * @return SS_HTTPRequest
-     */
-    public function import() {
-        $zip = new ZipArchive;
-        $res = $zip->open($_FILES['import-assests-file']['tmp_name']);
-        if ($res === TRUE) {
-            $zip->extractTo(ASSETS_PATH);
-            $zip->close();
-            echo 'woot!';
-        } else {
-            echo 'doh!';
-        }
-    }
-
 }
