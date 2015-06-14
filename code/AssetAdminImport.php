@@ -61,6 +61,9 @@ class AssetAdminImport extends LeftAndMainExtension {
         }
     }
 
+    /**
+     * @return CMSForm
+     */
     public function ImportForm() {
         Requirements::javascript(FRAMEWORK_DIR . '/javascript/AssetUploadField.js');
         Requirements::css(FRAMEWORK_DIR . '/css/AssetUploadField.css');
