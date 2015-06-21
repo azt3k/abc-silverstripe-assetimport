@@ -1,0 +1,23 @@
+{
+	"name": "azt3k/abc-silverstripe-assetimport",
+	"description": "imports an export from silverstripe-assetexport",
+	"type": "silverstripe-module",
+	"homepage": "https://github.com/azt3k/abc-silverstripe-assetimport",
+	"keywords": ["silverstripe", "asset", "assets", "file", "files", "backup", "export", "import", "zip", "compress"],
+	"authors": [
+		{
+			"name": "Aaron Latham-Ilari",
+			"email": "az@dev-io.us"
+		}
+	],
+	"license": "BSD-3-Clause",
+	"support": {
+		"issues": "https://github.com/azt3k/abc-silverstripe-assetimport/issues"
+	},
+	"require": {
+		"composer/installers": "~1.0"
+	},
+	"extra" : {
+		"installer-name": "assetimport"
+	}
+}
