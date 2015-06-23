@@ -124,6 +124,47 @@ class AssetAdminImport extends LeftAndMainExtension {
         return $form;
     }
 
+    public function getDirContents($dir, &$results = array(), $blacklist = null) {
+
+        // get blacklist
+        if (!$blacklist)
+            $blacklist = Config::inst()->get('Filesystem', 'sync_blacklisted_patterns');
+
+        // get files in current dir
+        $files = scandir($dir);
+
+        // check each file
+        foreach($files as $key => $file){
+
+            // generate full path
+            $path = realpath($dir . DIRECTORY_SEPARATOR . $file);
+
+            // init skip each iteration
+            $skip = false;
+
+            // test files against blacklist
+            foreach ($blacklist as $pattern) {
+                if (preg_match($pattern, $file)) {
+                    $skip = true;
+                    break;
+                }
+            }
+
+            // add the file if it's legal
+            if (!$skip) {
+                if (!is_dir($path)) {
+                    $results[] = $path;
+                } else if (is_dir($path) && $file != "." && $file != "..") {
+                    // $results[] = $path;
+                    $this->getDirContents($path, $results, $blacklist);
+                }
+            }
+        }
+
+        // return
+        return $results;
+    }
+
     /**
      *
      * @param  SS_HTTPRequest   $request [description]
@@ -157,46 +198,27 @@ class AssetAdminImport extends LeftAndMainExtension {
         $fn = ($folder->exists() && $folder->getFilename()) ? str_replace(ASSETS_DIR, '', $folder->getFilename()) : '' ;
         $path = ASSETS_PATH . $fn;
 
+        // init zip
         $fn = preg_replace('/-+/', '-', 'assets-' . preg_replace('/[^a-zA-Z0-9]+/', '-', $fn) . '-' . SS_DateTime::now()->Format('Y-m-d') . '.zip');
         $tmpName = TEMP_FOLDER . '/' . $fn;
         $zip = new ZipArchive();
 
-        if(!$zip->open($tmpName, ZipArchive::OVERWRITE)) {
+        // create zip file for writing
+        if($zip->open($tmpName, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
             user_error('Asset Export Extension: Unable to read/write temporary zip archive', E_USER_ERROR);
             return;
         }
 
-        $files = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator(
-                $path,
-                RecursiveDirectoryIterator::SKIP_DOTS
-            )
-        );
+        // get whitelisted files
+        $files = $this->getDirContents($path);
 
-        $blacklist = Config::inst()->get('Filesystem', 'sync_blacklisted_patterns');
-
+        // build zip
         foreach($files as $file) {
-
-            $local      = str_replace($path, '', $file);
-            $testPaths  = explode('/', trim($local, '/'));
-            $skip       = false;
-            $matched    = null;
-
-            // patterns are a match against the contents of a folder,
-            // but excluding a parent means that all children should also be excluded
-            foreach ($blacklist as $pattern) {
-                foreach ($testPaths as $testPath) {
-                    if (preg_match($pattern, $testPath)) {
-                        $skip = true;
-                        break;
-                    }
-                }
-                if ($skip) break;
-            }
-
-            if (!$skip) $zip->addFile($file, $local);
+            $local = trim(str_replace($path, '', $file), '/');
+            $zip->addFile($file, $local);
         }
 
+        // check the status
         if(!$zip->status == ZipArchive::ER_OK) {
             user_error('Asset Export Extension: ZipArchive returned an error other than OK', E_USER_ERROR);
             return;
