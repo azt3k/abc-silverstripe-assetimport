@@ -196,7 +196,7 @@ class AssetAdminImport extends LeftAndMainExtension {
         // get folder
         $folder = $this->owner->currentPage();
         $fn = ($folder->exists() && $folder->getFilename()) ? str_replace(ASSETS_DIR, '', $folder->getFilename()) : '' ;
-        $path = ASSETS_PATH . $fn;
+        $path = realpath(ASSETS_PATH . $fn);
 
         // init zip
         $fn = preg_replace('/-+/', '-', 'assets-' . preg_replace('/[^a-zA-Z0-9]+/', '-', $fn) . '-' . SS_DateTime::now()->Format('Y-m-d') . '.zip');
