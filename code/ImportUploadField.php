@@ -1,6 +1,7 @@
 <?php
 
-class ImportUploadField extends UploadField {
+class ImportUploadField extends UploadField
+{
 
     /**
      * @var array
@@ -20,14 +21,17 @@ class ImportUploadField extends UploadField {
      * @return SS_HTTPResponse
      * @return SS_HTTPResponse
      */
-    public function upload(SS_HTTPRequest $request) {
-        if($this->isDisabled() || $this->isReadonly() || !$this->canUpload()) {
+    public function upload(SS_HTTPRequest $request)
+    {
+        if ($this->isDisabled() || $this->isReadonly() || !$this->canUpload()) {
             return $this->httpError(403);
         }
 
         // Protect against CSRF on destructive action
         $token = $this->getForm()->getSecurityToken();
-        if(!$token->checkRequest($request)) return $this->httpError(400);
+        if (!$token->checkRequest($request)) {
+            return $this->httpError(400);
+        }
 
         // Get form details
         $name = $this->getName();
@@ -39,7 +43,7 @@ class ImportUploadField extends UploadField {
 
 
         $file = $this->saveTemporaryFile($firstFile, $error);
-        if(empty($file)) {
+        if (empty($file)) {
             $return = array('error' => $error);
         } else {
             $return = $this->encodeFileAttributes($file);
@@ -57,8 +61,9 @@ class ImportUploadField extends UploadField {
         // Format response with json
         $response = new SS_HTTPResponse(Convert::raw2json(array($return)));
         $response->addHeader('Content-Type', 'text/plain');
-        if (!empty($return['error'])) $response->setStatusCode(403);
+        if (!empty($return['error'])) {
+            $response->setStatusCode(403);
+        }
         return $response;
     }
-
 }

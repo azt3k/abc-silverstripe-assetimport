@@ -1,6 +1,7 @@
 <?php
 
-class AssetAdminImport extends LeftAndMainExtension {
+class AssetAdminImport extends LeftAndMainExtension
+{
 
     private static $allowed_actions = array(
         'import',
@@ -12,8 +13,8 @@ class AssetAdminImport extends LeftAndMainExtension {
      * @param Form $form
      * @return Form $form
      */
-    public function updateEditForm(Form $form) {
-
+    public function updateEditForm(Form $form)
+    {
         $importButton = new LiteralField(
             'ImportButton',
             '<a id="import-assets-btn"
@@ -33,7 +34,7 @@ class AssetAdminImport extends LeftAndMainExtension {
             )
         );
 
-        if($field = $this->fieldByExtraClass($form->Fields(), 'cms-actions-row')) {
+        if ($field = $this->fieldByExtraClass($form->Fields(), 'cms-actions-row')) {
             $field->push($exportButton);
             $field->push($importButton);
         }
@@ -50,12 +51,13 @@ class AssetAdminImport extends LeftAndMainExtension {
      * @param $class The extra class name to search for
      * @return FormField|null
      */
-    public function fieldByExtraClass(FieldList $fields, $class) {
-        foreach($fields as $field)  {
-            if($field->extraClasses && in_array($class, $field->extraClasses)) {
+    public function fieldByExtraClass(FieldList $fields, $class)
+    {
+        foreach ($fields as $field) {
+            if ($field->extraClasses && in_array($class, $field->extraClasses)) {
                 return $field;
             }
-            if($field->isComposite()) {
+            if ($field->isComposite()) {
                 return $this->fieldByExtraClass($field->FieldList(), $class);
             }
         }
@@ -64,11 +66,12 @@ class AssetAdminImport extends LeftAndMainExtension {
     /**
      * @return CMSForm
      */
-    public function ImportForm() {
+    public function ImportForm()
+    {
         Requirements::javascript(FRAMEWORK_DIR . '/javascript/AssetUploadField.js');
         Requirements::css(FRAMEWORK_DIR . '/css/AssetUploadField.css');
 
-        if($currentPageID = $this->owner->currentPageID()){
+        if ($currentPageID = $this->owner->currentPageID()) {
             Session::set("{$this->owner->class}.currentPage", $currentPageID);
         }
 
@@ -82,7 +85,7 @@ class AssetAdminImport extends LeftAndMainExtension {
         $uploadField->removeExtraClass('ss-uploadfield');
         $uploadField->setTemplate('AssetUploadField');
 
-        if($folder->exists() && $folder->getFilename()) {
+        if ($folder->exists() && $folder->getFilename()) {
 
             // The Upload class expects a folder relative *within* assets/
             $path = preg_replace('/^' . ASSETS_DIR . '\//', '', $folder->getFilename());
@@ -124,17 +127,19 @@ class AssetAdminImport extends LeftAndMainExtension {
         return $form;
     }
 
-    public function getDirContents($dir, &$results = array(), $blacklist = null) {
+    public function getDirContents($dir, &$results = array(), $blacklist = null)
+    {
 
         // get blacklist
-        if (!$blacklist)
+        if (!$blacklist) {
             $blacklist = Config::inst()->get('Filesystem', 'sync_blacklisted_patterns');
+        }
 
         // get files in current dir
         $files = scandir($dir);
 
         // check each file
-        foreach($files as $key => $file){
+        foreach ($files as $key => $file) {
 
             // generate full path
             $path = realpath($dir . DIRECTORY_SEPARATOR . $file);
@@ -154,7 +159,7 @@ class AssetAdminImport extends LeftAndMainExtension {
             if (!$skip) {
                 if (!is_dir($path)) {
                     $results[] = $path;
-                } else if (is_dir($path) && $file != "." && $file != "..") {
+                } elseif (is_dir($path) && $file != "." && $file != "..") {
                     // $results[] = $path;
                     $this->getDirContents($path, $results, $blacklist);
                 }
@@ -170,13 +175,13 @@ class AssetAdminImport extends LeftAndMainExtension {
      * @param  SS_HTTPRequest   $request [description]
      * @return string
      */
-    public function import($request) {
-
+    public function import($request)
+    {
         $obj = $this->owner->customise(array(
             'EditForm' => $this->owner->ImportForm()
         ));
 
-        if($request->isAjax()) {
+        if ($request->isAjax()) {
             // Rendering is handled by template, which will call EditForm() eventually
             $content = $obj->renderWith($this->owner->getTemplatesWithSuffix('_Content'));
         } else {
@@ -184,14 +189,13 @@ class AssetAdminImport extends LeftAndMainExtension {
         }
 
         return $content;
-
-
     }
 
     /**
      * @return SS_HTTPRequest
      */
-    public function export() {
+    public function export()
+    {
 
         // get folder
         $folder = $this->owner->currentPage();
@@ -204,7 +208,7 @@ class AssetAdminImport extends LeftAndMainExtension {
         $zip = new ZipArchive();
 
         // create zip file for writing
-        if($zip->open($tmpName, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+        if ($zip->open($tmpName, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
             user_error('Asset Export Extension: Unable to read/write temporary zip archive', E_USER_ERROR);
             return;
         }
@@ -213,20 +217,20 @@ class AssetAdminImport extends LeftAndMainExtension {
         $files = $this->getDirContents($path);
 
         // build zip
-        foreach($files as $file) {
+        foreach ($files as $file) {
             $local = trim(str_replace($path, '', $file), '/');
             $zip->addFile($file, $local);
         }
 
         // check the status
-        if(!$zip->status == ZipArchive::ER_OK) {
+        if (!$zip->status == ZipArchive::ER_OK) {
             user_error('Asset Export Extension: ZipArchive returned an error other than OK', E_USER_ERROR);
             return;
         }
 
         $zip->close();
 
-        if(ob_get_length()) {
+        if (ob_get_length()) {
             @ob_flush();
             @flush();
             @ob_end_flush();
@@ -238,5 +242,4 @@ class AssetAdminImport extends LeftAndMainExtension {
 
         return SS_HTTPRequest::send_file($content, $fn);
     }
-
 }
